@@ -1,4 +1,4 @@
-# manual_operate
+# python_drive
 
 This code can drive the rover, move the arm, and operate the science package.
 
@@ -22,7 +22,7 @@ There are two distinct modes in the program: drive and operate. Drive obviously 
 
 ### Drive
 
-The rover drives with tank controls (**Left Stick** moves left wheels, **Right Stick** moves right wheels). The **Left Bumper** will only move the front wheels while the **Right Bumper** will only move the back wheels. This could be useful for getting the rover unstuck. **A** will just make the lights flash. 
+The rover drives with tank controls (**Left Stick** moves left wheels, **Right Stick** moves right wheels). The **Left Bumper** will only move the front wheels while the **Right Bumper** will only move the back wheels. This could be useful for getting the rover unstuck. **A** will just make the lights flash.
 
 ### Arm
 
@@ -31,3 +31,9 @@ The arm is controlled with the help of the GUI. The **Left Stick** controls the 
 ### Science Package
 
 The Science package has 4 distinct controllable elements. The **Left Stick** moves the drill up and down in space. The **Right Stick** controls the speed of the drill. **Right Trigger** increases the speed of the vacuum while **Left Trigger** decreases it. **Left Bumper** rotates the carousel clockwise while **Right Bumper** rotates the carousel counterclockwise. **A** attempts to move the carousel one seventh of a rotation, but it is based on time elapsed and may not move the same amout each time.
+
+## Documentation
+
+This SoRo component is a new candidate for documentation! If you know markdown, and have a good idea about what's going on here, please feel free to [make a new page about it in the docs](https://sooner-rover-team.github.io/soro-documentation/html/new-page-guide.html)! :)
+
+In addition, this tool has multiple entrypoints with no instructions. It may be a good idea to document the usage of this utility for beginners. A table or two could help with the controls, too!
