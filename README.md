@@ -1,28 +1,34 @@
-# python_drive
+# manual_operate
 
-This code can drive the rover, move the arm, and operate the science package.
+This code can drive the rover, move the arm, and operate the science package. It requires an XBOX or PS4/PS5 controller to operate.
+
+## Dependencies
+At the moment, python 3.10 or higher, pygame and zmq are required to run manual_operate.py.
+
+Python can be downloaded [here](https://www.python.org/downloads/)
+
+Download the libraries using 
+```
+pip install pygame 
+pip install zmq
+```
 
 ## Usage
 
-The config.ini file must have the correct ip addresses of the microcontrollers.
+The config.ini file must have the correct ip addresses of the EBOX microcontroller, as it controls the wheels and distributes data to arm/science via CAN-Bus.
 
-Ebox MBED IP: 10.0.0.101
-Ebox MBED Port: 1001
-Arm Arduino IP: 10.0.0.102
-Arm Arduino Port: 1002
-Science Arduino IP: 10.0.0.103
-Science Arduino Port: 1003
+Ebox Teensy 4.1 IP: 192.168.1.101
+Ebox Teensy 4.1 Port: 1001
 
-The controller configuration can also be adjusted as different axes will have different indicies depending on the system/controller.
-Config **0** sets the dual sticks to axes 0-3 while the triggers are 4 and 5. Config **1** sets left axes to 0 and 1 with the left trigger set to 2. The right stick is set to 3 and 4 with the right trigger at 5. To figure out the mappings of the controller, run controllertester.py.
+The controller configuration can also be adjusted according to the physical controller being used. In config.ini, change `[Controller] CONFIG = ` to `ps` or `xbox`
 
 ## Controls
 
-There are two distinct modes in the program: drive and operate. Drive obviously just drives the wheels. Operate can be used to control either the science package or the arm, depending on which is installed (can be toggled by pressing **Select**). **B** switches between drive and operate.
+There are two distinct modes in the program: drive and operate. Drive obviously just drives the wheels and changes LEDs. Operate can be used to control either the science package or the arm, depending on which is installed (can be toggled by pressing **Select**). **B** switches between drive and operate.
 
 ### Drive
 
-The rover drives with tank controls (**Left Stick** moves left wheels, **Right Stick** moves right wheels). The **Left Bumper** will only move the front wheels while the **Right Bumper** will only move the back wheels. This could be useful for getting the rover unstuck. **A** will just make the lights flash.
+The rover drives with tank controls (**Left Stick** moves left wheels, **Right Stick** moves right wheels). The **Left Bumper** will only move the front wheels while the **Right Bumper** will only move the back wheels. This could be useful for getting the rover unstuck. **A** will just make the lights flash. 
 
 ### Arm
 
@@ -31,9 +37,3 @@ The arm is controlled with the help of the GUI. The **Left Stick** controls the 
 ### Science Package
 
 The Science package has 4 distinct controllable elements. The **Left Stick** moves the drill up and down in space. The **Right Stick** controls the speed of the drill. **Right Trigger** increases the speed of the vacuum while **Left Trigger** decreases it. **Left Bumper** rotates the carousel clockwise while **Right Bumper** rotates the carousel counterclockwise. **A** attempts to move the carousel one seventh of a rotation, but it is based on time elapsed and may not move the same amout each time.
-
-## Documentation
-
-This SoRo component is a new candidate for documentation! If you know markdown, and have a good idea about what's going on here, please feel free to [make a new page about it in the docs](https://sooner-rover-team.github.io/soro-documentation/html/new-page-guide.html)! :)
-
-In addition, this tool has multiple entrypoints with no instructions. It may be a good idea to document the usage of this utility for beginners. A table or two could help with the controls, too!
