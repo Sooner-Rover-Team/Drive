@@ -117,7 +117,7 @@ if USING_BRIDGE:
 else:
     ebox_socket.connect((EBOX_HOST,EBOX_PORT)) # if not using base station, make the microcontroller the host? why not laptop?
 """ GPS SOCKET """
-gps = MessageListener(ip="192.168.1.3", port=5555) # jetson ip/port
+gps = MessageListener(ip="192.168.1.69", port=5555) # jetson ip/port
 gps.start() # creates a new thread to listen to gps data in background
 old_data = {"latitude": -1.0, "longitude": -1.0, "bearing": -1.0} # place holder to just keep printing last received gps coords
 """ SCIENCE PLOTS """
@@ -160,6 +160,7 @@ drill=0
 small_actuator = 0
 test_tubes = 0
 camera_servo = 90
+camera_updown = 90
 old_big_actuator = 0
 old_drill = 0
 old_small_actuator = 0
@@ -247,15 +248,16 @@ def arm_messge(shoulder_length, elbow_length, base_rotation, wrist_angle, wrist_
 """ make a science message """
 # OLD SCIENCE msg: [startByte, deviceID, linearActuator, carousel, claw, microscope, checkSum]
  # MSG: [0x03, big_actuator, drill, small_actuator, test_tubes, camera_servo, checkSum]
-def sci_message(big_actuator, drill, small_actuator, test_tubes, camera_servo):
-    msg = bytearray(7)
+def sci_message(big_actuator, drill, small_actuator, test_tubes, camera_servo, camera_updown):
+    msg = bytearray(8)
     msg[0] = 0x03 # ID for SCIENCE
     msg[1] = big_actuator
     msg[2] = drill
     msg[3] = small_actuator
     msg[4] = test_tubes
     msg[5] = camera_servo
-    msg[6] = sum(msg[1:6]) & 0xff
+    msg[6] = camera_updown
+    msg[7] = sum(msg[1:7]) & 0xff
     return msg
 
 """ send a message to the LED strip"""
@@ -491,7 +493,7 @@ if __name__ == "__main__":
             """ TO DO IS WORK """
             # TODO: Make functions to cut power in wrist/ keeping it down for pickin up heavy things?
             # TODO: Improve GUI to show control layouts.
-            # TODO: Make function for smooth "poking" motion for button pressing
+            # TODO: Make function for smooth "poking" motion for button pressing m  
 
             # movement factor is some rate that the position values change
             movement_factor = 0.2 / (FPS/10)
@@ -544,7 +546,7 @@ if __name__ == "__main__":
             else:
                 base_rotation = 126
             if (abs(R_Y) > THRESHOLD_HIGH):
-                wrist_angle = 126 + int(R_Y * 42) # for fine mainupulation change this to 32 (currently 55)
+                wrist_angle = 126 + int(R_Y * 52) # for fine mainupulation change this to 32 (currently 55)
             else:
                 wrist_angle = 126
             
@@ -558,10 +560,7 @@ if __name__ == "__main__":
 
 
 
-            # send the data
-            # information, addr = arm_socket.recvfrom(1024) # 1024 is either num of bytes or num of bits to read from server socket
-            # print("\n\n Client recieved: ", information)
-            # print("Decoded message: ", information.decode('utf-8'), "\n\n")
+
 
         # send science package messages
         # Left/Right bumpers move carousel in sections.
@@ -584,45 +583,47 @@ if __name__ == "__main__":
             else:
                 drill = 126
 
-            """ SMALL ACTUATOR ->  Y and A buttons """ # Triangle retracts, cirlce extends (to collect regolith below surface)
+            """ SMALL ACTUATOR ->  Right Joystick y-axis """ 
+            if (abs(R_Y) > THRESHOLD_HIGH): # left stick vertical axis controls linear actuator -1 to +1. Send 0 to 255. 0-127=backward speed. 127=stop, 127-255=forward speed
+                small_actuator = 126 - int(R_Y*126)
+            else:
+                small_actuator = 126
+
+            """ TEST TUBE SERVO ->  """
             if (joystick.get_button(Y_BUTTON)):
-                small_actuator = 252 # small actuator moves so slow that we just send max speeds when controlling
-            elif (joystick.get_button(A_BUTTON)):
-                small_actuator = 0
+                test_tubes = 80
+            elif(joystick.get_button(A_BUTTON)):
+                test_tubes = 100
             else:
-                small_actuator = 126 # dont move if neither button is pressed
+                test_tubes = 90
 
-            """ TEST TUBE ACTUATOR -> y axis d-pad """
-            if CONT_CONFIG == 'xbox':
-                if(gim[1] > THRESHOLD_HIGH):
-                    test_tubes = 252 # test tube actuator moves so slow that we just send max speeds when controlling
-                elif(gim[1] < -THRESHOLD_HIGH):
-                    test_tubes = 0
-                else:
-                    test_tubes = 126
-            else:
-                if(joystick.get_button(D_UP)):
-                    test_tubes = 252 # test tube actuator moves so slow that we just send max speeds when controlling
-                elif(joystick.get_button(D_DOWN)):
-                    test_tubes = 0
-                else:
-                    test_tubes = 126
 
-            """ CAMERA SERVO -> Left/Right Bumper for set positions,  x-axis d-pad for fine control """           
+            """ CAMERA SERVO -> Left/Right Bumper for set x positions, d-pad for fine control of both x/y axis """           
             # FOR A REGULAR SERVO. This provides incrimental positioning of camera for visibility
             if CONT_CONFIG == 'xbox':
-                if(abs(gim[0]) > THRESHOLD_HIGH):
+                if(gim[0] > THRESHOLD_HIGH):
                     camera_servo += 3*gim[0] # pressing d-pad modifies the current servo position
+                elif(gim[0] < -1 * THRESHOLD_HIGH):
+                    camera_servo -= 3*gim[0]
+                if(gim[1] > THRESHOLD_HIGH):
+                    camera_updown += 3*gim[1] # pressing d-pad modifies the current servo position
+                elif(gim[0] < -1 * THRESHOLD_HIGH):
+                    camera_updown -= 3*gim[1]
             else:
                 if(joystick.get_button(D_LEFT)):
                     camera_servo -= 3 # pressing d-pad modifies the current servo position   
                 elif(joystick.get_button(D_RIGHT)):
                     camera_servo += 3
+                if(joystick.get_button(D_UP)):
+                    camera_updown += 3
+                elif(joystick.get_button(D_DOWN)):
+                    camera_updown -= 3
 
-            if(camera_servo>180):
-                camera_servo=180
-            elif(camera_servo<0):
-                camera_servo=0
+            if(camera_servo>180): camera_servo=180
+            elif(camera_servo<0): camera_servo=0
+                
+            if(camera_updown>180): camera_updown=180
+            elif(camera_updown<0): camera_updown=0
 
             # Left bumper cycles back in panoramic angles. this provides set angles for camera panorama
             elif (joystick.get_button(L_BUMPER)):
@@ -645,10 +646,10 @@ if __name__ == "__main__":
                 bumper_pressed = False
 
             # If a new button was pressed, then the message is new, meaning new commands need to be sent to rover. If msg hasn't changed, no need to send redundant data
-            if(messageIsDifferent([big_actuator, drill, small_actuator, test_tubes, camera_servo], lastScienceMsg) or numSameMessages > 5):
+            if(messageIsDifferent([big_actuator, drill, small_actuator, test_tubes, camera_servo, camera_updown], lastScienceMsg) or numSameMessages > 5):
                 numSameMessages = 0
-                data = sci_message(big_actuator, drill, small_actuator, test_tubes, camera_servo)
-                print(big_actuator, drill, small_actuator, test_tubes, camera_servo, data[6])
+                data = sci_message(big_actuator, drill, small_actuator, test_tubes, camera_servo, camera_updown)
+                print(big_actuator, drill, small_actuator, test_tubes, camera_servo, camera_updown, data[7])
                 ebox_socket.sendall(data)
             else:
                 numSameMessages+=1
@@ -667,7 +668,7 @@ if __name__ == "__main__":
                 
             except socket.error as e:
                 print("Socket error:", e)
-            print(scienceData)
+            # print(scienceData)
 
             if scienceData is not None:
                 print(scienceData)
@@ -677,7 +678,7 @@ if __name__ == "__main__":
                 if sensor_values[2] < 0: 
                     sensor_values[2] = 0
                 old_sensor_data = sensor_values
-                print(f"Received message: {sensor_values}")
+                # print(f"Received message: {sensor_values}")
                 # update_plots(len(buffers[0]) + 1, sensor_values)  # Increment the x-axis index
                 # Check for peaks
                 if max(sensor_values) > peak_threshold:
@@ -703,7 +704,7 @@ if __name__ == "__main__":
         # gps_info = [(data[0], data[1]), data[2]]
             # Location information
         data = gps.getData()
-        print(data)
+        #print(data)
         if data is None: # returns None if Listener didnt get UDP msgs from jetson
             data = old_data #{"latitude": -1.0, "longitude": -1.0, "bearing": -1.0}
         else:
@@ -716,15 +717,16 @@ if __name__ == "__main__":
         tp.print(screen,"Mode: ",BLACK)
         if mode == 'drive':
             tp.print(screen,"Drive",RED)
-            util.draw_drive_stuff(screen,leftwheels, rightwheels)
+            util.draw_drive_stuff(screen, leftwheels, rightwheels,[(data["latitude"], data["longitude"]), data["bearing"]], tp)
         elif arm_installed:
             tp.print(screen,"Arm",RED)
-            util.draw_arm_stuff(screen, alt_arm_config, claw_x, claw_y)
+            util.draw_arm_stuff(screen, alt_arm_config, claw_x, claw_y,[(data["latitude"], data["longitude"]), data["bearing"]], tp)
         else:
             tp.print(screen,"Science",RED)
-            #act_speed_draw = act_speed-126 if act_dir == 0 else -(act_speed-126)
-            util.draw_science_stuff(screen, (big_actuator, small_actuator, test_tubes, drill, camera_servo), sensor_values, [(data["latitude"], data["longitude"]), data["bearing"]], tp)
-            # util.draw_science_stuff(screen, (act_speed, microscope_position, claw_position, carousel_turn), tp)
+            if(test_tubes > 90): test_tubes = 252
+            elif(test_tubes < 90): test_tubes = 0
+            else: test_tubes = 126
+            util.draw_science_stuff(screen, (big_actuator, small_actuator, drill, test_tubes, camera_servo, camera_updown), sensor_values, [(data["latitude"], data["longitude"]), data["bearing"]], tp)
 
         tp.println(screen, '',BLACK)
 

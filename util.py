@@ -207,7 +207,7 @@ def arm_calc(alt_arm_config, temp_u, temp_v):
 
 
 """ draw all the arm garbage on screen """
-def draw_arm_stuff(screen, alt_arm_config, claw_x, claw_y):
+def draw_arm_stuff(screen, alt_arm_config, claw_x, claw_y, gps_info, tp):
     global initialize
     global bicepImage
     global bicepAngle
@@ -225,7 +225,8 @@ def draw_arm_stuff(screen, alt_arm_config, claw_x, claw_y):
                      (origin_x+10, origin_y))
     pygame.draw.line(screen, BLACK, (origin_x, origin_y-10),
                      (origin_x, origin_y+10))
-
+    tp.printat(screen, f"GPS: {str(gps_info[0])}", BLACK, (800, 250))
+    tp.printat(screen, f"Bearing: {str(gps_info[1])}", BLACK, (800, 280))
     if alt_arm_config == 0:
         """ bounds for default configuration """
         # painter.drawArc(origin_x-30.75*scale, origin_y-30.75*scale, 30.75*scale*2, 30.75*scale*2, -25*16, 80*16);
@@ -356,7 +357,7 @@ def cosine_angle(x1, y1, x2, y2, x3, y3):
 Currently displays each individual wheel and relative speed using controller inputs. Not implementing gimbal UI because 
   camera view should be enough.
 """
-def draw_drive_stuff(screen, leftwheels, rightwheels):
+def draw_drive_stuff(screen, leftwheels, rightwheels, gps_info, tp):
     w,h = (800,600)#screen.get_size()
     c_x = w/2
     c_y =h/2
@@ -365,6 +366,9 @@ def draw_drive_stuff(screen, leftwheels, rightwheels):
     left_x = c_x-c_x*.4
     bar_height = y_spacing*.4
     bar_width = 60
+    tp.printat(screen, f"GPS: {str(gps_info[0])}", BLACK, (800, 250))
+    tp.printat(screen, f"Bearing: {str(gps_info[1])}", BLACK, (800, 280))
+
     for i in range(6):
         if i < 3:
             height = (leftwheels[i] - 126) / -126
@@ -389,8 +393,8 @@ For loop creates Actuator, Microscope and Claw rectangles and uses height variab
 # speeds = (big_actuator, small_actuator, test_tubes, drill, camera_servo)
 def draw_science_stuff(screen, speeds, scienceData, gps_info, tp):
     w,h = (800,600)#screen.get_size()
-    labels = ['Staff', 'Chamber', 'Drill', 'Test Tubes']
-    directions = ['Up', 'Down', 'Open', 'Close', 'Forward', 'Reverse', 'Left', 'Right']
+    labels = ['Big-Act', 'Small-Act', 'Drill', 'Test Tubes']
+    directions = ['Up', 'Down', 'Up', 'Down', 'Forward', 'Reverse', 'In', 'Out']
     c_x = w/2
     c_y =h/2
     x_spacing = w/4.5
@@ -404,7 +408,7 @@ def draw_science_stuff(screen, speeds, scienceData, gps_info, tp):
     tp.printat(screen, f"Temp={scienceData[0]} F, Humidity={scienceData[1]} %", BLACK, (810, 240))
     tp.printat(screen, f"Methane={scienceData[2]} ppm", BLACK, (850, 270))
 
-    for i in range(len(speeds)-1):
+    for i in range(len(labels)):
         s = speeds[i]
         x_coord = left_x + i * x_spacing
         y_coord = c_y
@@ -424,7 +428,7 @@ def draw_science_stuff(screen, speeds, scienceData, gps_info, tp):
 
         pygame.draw.rect(screen, BLACK, bound, 4, 1)
 
-    s = speeds[len(speeds)-1] #camera Servo
+    s = speeds[4] #camera Servo
     width = s - 1
     bound = pygame.rect.Rect(c_x-left_x-x_spacing/2, c_y+bar_height*1.2,x_spacing*2,bar_width)
     if width != 0:
@@ -434,6 +438,7 @@ def draw_science_stuff(screen, speeds, scienceData, gps_info, tp):
 
     pygame.draw.rect(screen, BLACK, bound, 4, 1)
     tp.printat(screen, 'Panoramic Camera', BLACK, (c_x-150, c_y + bar_height+80))
+    tp.printat(screen, f"Camera-vert={speeds[5]}", BLACK, (c_x-130, c_y + bar_height+110))
 
 
 
